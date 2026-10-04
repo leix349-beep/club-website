@@ -1,5 +1,13 @@
 # Original website illustrations
 
+## learning-journey.png
+
+Use case: illustration-story. Asset type: original small website illustration for an economics student club's 'How we think' section. Subject: two friendly student explorers standing on a winding path on low hills, one holding a notebook and one pointing toward a small mountain summit with a little cobalt pennant flag. Mood comfortable, curious, encouraging. Style simple flat editorial learning illustration, crisp geometric shapes, restrained details, no outlines, no photography or 3D. Palette navy #071e2c, cobalt #2453ed, cyan #17a9e6, pale blue and cool gray, natural varied skin tones. Compact centered landscape vignette, generous clear margins, fully visible figures. Genuinely transparent background. No words, no logos, no watermark.
+
+## club-profile.png
+
+Club profile image supplied by the owner; reused without modification as the site identity and favicon.
+
 Generated with the built-in image generation tool. Transparent PNG files are stored locally here for GitHub Pages.
 
 ## tent-landscape.png
