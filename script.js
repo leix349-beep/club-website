@@ -1,25 +1,117 @@
-const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
-const finePointer=matchMedia('(pointer: fine)').matches;
-document.getElementById('year').textContent=new Date().getFullYear();
+const motionQuery = matchMedia('(prefers-reduced-motion: reduce)');
+const finePointer = matchMedia('(pointer: fine)');
+document.getElementById('year').textContent = new Date().getFullYear();
 
-const menuButton=document.querySelector('.menu-toggle');
-menuButton.addEventListener('click',()=>{const open=document.body.classList.toggle('menu-open');menuButton.setAttribute('aria-expanded',String(open))});
-document.querySelectorAll('#site-nav a').forEach(link=>link.addEventListener('click',()=>{document.body.classList.remove('menu-open');menuButton.setAttribute('aria-expanded','false')}));
+const menuButton = document.querySelector('.menu-toggle');
+const closeMenu = () => {
+  document.body.classList.remove('menu-open');
+  menuButton.setAttribute('aria-expanded', 'false');
+};
+menuButton.addEventListener('click', () => {
+  const open = document.body.classList.toggle('menu-open');
+  menuButton.setAttribute('aria-expanded', String(open));
+});
+document.querySelectorAll('#site-nav a').forEach(link => link.addEventListener('click', closeMenu));
+addEventListener('keydown', event => { if (event.key === 'Escape') closeMenu(); });
 
-const reveals=document.querySelectorAll('.reveal');
-document.querySelectorAll('.hero .reveal').forEach(el=>el.classList.add('is-visible'));
-if(reducedMotion)reveals.forEach(el=>el.classList.add('is-visible'));
-else{const observer=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('is-visible');observer.unobserve(entry.target)}}),{threshold:.12,rootMargin:'0px 0px -5% 0px'});reveals.forEach(el=>observer.observe(el))}
+if (!motionQuery.matches && 'IntersectionObserver' in window) {
+  document.documentElement.classList.add('motion-ready');
+  const observer = new IntersectionObserver(entries => entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('is-visible');
+      observer.unobserve(entry.target);
+    }
+  }), { threshold: 0.06, rootMargin: '0px 0px 35px 0px' });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  requestAnimationFrame(() => requestAnimationFrame(() =>
+    document.querySelectorAll('.hero .reveal').forEach(el => el.classList.add('is-visible'))
+  ));
+}
+motionQuery.addEventListener('change', () => {
+  if (motionQuery.matches) document.documentElement.classList.remove('motion-ready');
+});
 
-const countObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{if(!entry.isIntersecting)return;const target=Number(entry.target.dataset.count);if(reducedMotion)entry.target.textContent=target;else{const start=performance.now();const tick=now=>{const progress=Math.min((now-start)/1100,1);entry.target.textContent=Math.round(target*(1-Math.pow(1-progress,3)));if(progress<1)requestAnimationFrame(tick)};requestAnimationFrame(tick)}countObserver.unobserve(entry.target)}),{threshold:.7});
-document.querySelectorAll('[data-count]').forEach(counter=>countObserver.observe(counter));
+const count = el => {
+  const target = Number(el.dataset.count);
+  if (motionQuery.matches) { el.textContent = target; return; }
+  const began = performance.now();
+  const tick = now => {
+    const progress = Math.min((now - began) / 900, 1);
+    el.textContent = Math.round(target * (1 - Math.pow(1 - progress, 3)));
+    if (progress < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+};
+if ('IntersectionObserver' in window) {
+  const observer = new IntersectionObserver(entries => entries.forEach(entry => {
+    if (entry.isIntersecting) { count(entry.target); observer.unobserve(entry.target); }
+  }), { threshold: .3 });
+  document.querySelectorAll('[data-count]').forEach(el => observer.observe(el));
+} else document.querySelectorAll('[data-count]').forEach(count);
 
-if(finePointer&&!reducedMotion){
-  const hero=document.querySelector('.hero'),dot=document.querySelector('.cursor-dot'),ring=document.querySelector('.cursor-ring');let mouseX=innerWidth/2,mouseY=innerHeight/2,ringX=mouseX,ringY=mouseY;
-  addEventListener('mousemove',event=>{mouseX=event.clientX;mouseY=event.clientY;dot.style.opacity=ring.style.opacity='1';dot.style.transform=`translate(${mouseX-2.5}px,${mouseY-2.5}px)`;const rect=hero.getBoundingClientRect();if(event.clientY>=rect.top&&event.clientY<=rect.bottom){hero.style.setProperty('--mouse-x',`${event.clientX}px`);hero.style.setProperty('--mouse-y',`${event.clientY-rect.top}px`)}});
-  const follow=()=>{ringX+=(mouseX-ringX)*.14;ringY+=(mouseY-ringY)*.14;ring.style.transform=`translate(${ringX-16}px,${ringY-16}px)`;requestAnimationFrame(follow)};follow();
-  document.querySelectorAll('a,button,.tilt').forEach(el=>{el.addEventListener('mouseenter',()=>ring.classList.add('is-hovering'));el.addEventListener('mouseleave',()=>ring.classList.remove('is-hovering'))});
-  document.querySelectorAll('.tilt').forEach(card=>{card.addEventListener('mousemove',event=>{const r=card.getBoundingClientRect(),x=(event.clientX-r.left)/r.width-.5,y=(event.clientY-r.top)/r.height-.5;card.style.transform=`perspective(900px) rotateX(${-y*4}deg) rotateY(${x*4}deg) translateY(-4px)`});card.addEventListener('mouseleave',()=>card.style.transform='')});
+if (finePointer.matches) {
+  const hero = document.querySelector('.hero');
+  const dot = document.querySelector('.cursor-dot');
+  const ring = document.querySelector('.cursor-ring');
+  let mouseX = 0, mouseY = 0, ringX = 0, ringY = 0, frame = 0, lastTime = 0;
+  const follow = now => {
+    if (motionQuery.matches) { frame = 0; return; }
+    const elapsed = Math.min(now - (lastTime || now - 16), 40);
+    lastTime = now;
+    const response = 1 - Math.exp(-elapsed / 24);
+    ringX += (mouseX - ringX) * response;
+    ringY += (mouseY - ringY) * response;
+    ring.style.transform = 'translate(' + ringX + 'px,' + ringY + 'px)';
+    if (Math.abs(mouseX - ringX) + Math.abs(mouseY - ringY) > .1) frame = requestAnimationFrame(follow);
+    else { frame = 0; lastTime = 0; }
+  };
+  addEventListener('pointermove', event => {
+    if (motionQuery.matches || event.pointerType === 'touch') return;
+    if (!dot.style.opacity || dot.style.opacity === '0') { ringX = event.clientX; ringY = event.clientY; }
+    mouseX = event.clientX; mouseY = event.clientY;
+    dot.style.opacity = ring.style.opacity = '1';
+    dot.style.transform = 'translate(' + (mouseX - 2) + 'px,' + (mouseY - 2) + 'px)';
+    if (!frame) frame = requestAnimationFrame(follow);
+    const rect = hero.getBoundingClientRect();
+    if (mouseY >= rect.top && mouseY <= rect.bottom) {
+      hero.style.setProperty('--mouse-x', mouseX + 'px');
+      hero.style.setProperty('--mouse-y', (mouseY - rect.top) + 'px');
+    }
+  }, { passive: true });
+  document.documentElement.addEventListener('pointerleave', () => { dot.style.opacity = ring.style.opacity = '0'; });
+  document.querySelectorAll('a,button').forEach(el => {
+    el.addEventListener('pointerenter', () => ring.classList.add('is-hovering'));
+    el.addEventListener('pointerleave', () => ring.classList.remove('is-hovering'));
+  });
 }
 
-if(!reducedMotion)document.querySelectorAll('a[href^="#"]').forEach(link=>link.addEventListener('click',event=>{const destination=document.querySelector(link.getAttribute('href'));if(!destination)return;event.preventDefault();const target=destination.getBoundingClientRect().top+scrollY,start=scrollY,distance=target-start,began=performance.now(),duration=Math.min(1100,Math.max(550,Math.abs(distance)*.45));const scrollFrame=now=>{const p=Math.min((now-began)/duration,1),ease=1-Math.pow(1-p,4);scrollTo(0,start+distance*ease);if(p<1)requestAnimationFrame(scrollFrame);else history.replaceState(null,'',link.getAttribute('href'))};requestAnimationFrame(scrollFrame)}));
+let scrollFrame = 0;
+const cancelScroll = () => cancelAnimationFrame(scrollFrame);
+addEventListener('wheel', cancelScroll, { passive: true });
+addEventListener('touchstart', cancelScroll, { passive: true });
+addEventListener('keydown', cancelScroll);
+document.querySelectorAll('a[href^="#"]').forEach(link => link.addEventListener('click', event => {
+  const destination = document.querySelector(link.getAttribute('href'));
+  if (!destination) return;
+  event.preventDefault();
+  cancelScroll();
+  const headerHeight = document.querySelector('.site-header').offsetHeight;
+  const target = Math.min(Math.max(0, destination.getBoundingClientRect().top + scrollY - headerHeight - 24),
+    document.documentElement.scrollHeight - innerHeight);
+  const finish = () => {
+    history.replaceState(null, '', link.getAttribute('href'));
+    if (link.classList.contains('skip-link')) {
+      destination.setAttribute('tabindex', '-1');
+      destination.focus({ preventScroll: true });
+    }
+  };
+  if (motionQuery.matches) { scrollTo(0, target); finish(); return; }
+  const start = scrollY, began = performance.now(), duration = 650;
+  const tick = now => {
+    const progress = Math.min((now - began) / duration, 1);
+    scrollTo(0, start + (target - start) * (1 - Math.pow(1 - progress, 3)));
+    if (progress < 1) scrollFrame = requestAnimationFrame(tick);
+    else finish();
+  };
+  scrollFrame = requestAnimationFrame(tick);
+}));
