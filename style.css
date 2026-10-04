@@ -30,3 +30,17 @@ summary:focus-visible{outline:2px solid var(--blue);outline-offset:4px}
 .motion-ready .reveal{filter:none;transform:translateY(6px);transition:opacity .9s ease,transform .9s ease}.motion-ready .reveal.is-visible{filter:none}
 @media(max-width:900px){.insight-card{grid-template-columns:170px minmax(0,1fr);gap:35px}.card-copy h3{font-size:31px}}
 @media(max-width:600px){.insight-card{grid-template-columns:1fr;gap:25px;padding:34px 0}.post-cover{width:145px;padding:8px}.post-cover img{max-height:185px}.card-copy h3{font-size:30px}.section-note{max-width:130px}.hero{background:#f5f8fb}}
+
+/* Slightly larger reading sizes, with the same restrained hierarchy. */
+.post-cover{cursor:default}
+.wordmark{font-size:15px}.site-header nav{font-size:14px}
+.hero-kicker,.section-note{font-size:13px}.section-label{font-size:12px}
+.eyebrow{font-size:14px}.hero-bottom p,.body-copy,.connect-action p{font-size:17px}
+.card-copy h3{font-size:38px}.card-copy p,.method-steps p{font-size:17px}
+.card-copy .card-meta{font-size:11px}.card-copy summary{font-size:15px}
+.card-copy a{font-size:14px}.card-copy .archive-link{font-size:14px}
+.archive-note,.connect-action small,.stats small{font-size:12px}
+.method-steps h3{font-size:32px}.method-steps article>span{font-size:11px}
+footer>div{font-size:12px}
+@media(max-width:900px){.card-copy h3{font-size:33px}}
+@media(max-width:600px){.wordmark{font-size:12px}.menu-toggle{font-size:13px}.hero-kicker{font-size:11px}.hero-bottom p{font-size:16px}.card-copy h3{font-size:32px}.card-copy p,.method-steps p{font-size:16px}}
